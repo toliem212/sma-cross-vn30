@@ -55,7 +55,9 @@ jobs:
           cp interview_audit/test_research_engine.py "$PKG/tests/test_research_engine.py"
           cp interview_audit/requirements.txt "$PKG/requirements.txt"
           cp interview_audit/README.md "$PKG/README.md"
-          cp -r data/price/*.csv "$PKG/data/price/"
+          for s in ACB BCM BID CTG DGC FPT GAS GVR HDB HPG LPB MBB MSN MWG PLX SAB SHB SSB SSI STB TCB TPB VCB VHM VIB VIC VJC VNM VPB VRE; do
+            cp "data/price/$s.csv" "$PKG/data/price/$s.csv"
+          done
           cp -r interview_audit/results/* "$PKG/results/"
           cp backtest_summary.csv "$PKG/legacy_reference/backtest_summary_legacy.csv"
           printf "python -m pip install -r requirements.txt\npython run_research_audit.py\nstreamlit run app_dashboard.py\n" > "$PKG/RUN_COMMANDS.txt"
