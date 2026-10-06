@@ -12,6 +12,12 @@ HERE = Path(__file__).resolve().parent
 ROOT = HERE if (HERE / "data" / "price").exists() else HERE.parent
 PRICE_DIR = ROOT / "data" / "price"
 
+FIXED_UNIVERSE = [
+    "ACB", "BCM", "BID", "CTG", "DGC", "FPT", "GAS", "GVR", "HDB", "HPG",
+    "LPB", "MBB", "MSN", "MWG", "PLX", "SAB", "SHB", "SSB", "SSI", "STB",
+    "TCB", "TPB", "VCB", "VHM", "VIB", "VIC", "VJC", "VNM", "VPB", "VRE"
+]
+
 COSTS = CostAssumptions(
     commission_bps_each_side=15.0,
     slippage_bps_each_side=5.0,
@@ -41,8 +47,7 @@ def main():
     st.title("SMA Cross VN30 - Research Audit")
     st.caption("Baseline sửa lại cho phỏng vấn: SMA10/50, signal Close(t), execution Open(t+1), fixed universe, cost scenario minh họa.")
 
-    files = sorted(PRICE_DIR.glob("*.csv"))
-    symbols = [p.stem for p in files]
+    symbols = [s for s in FIXED_UNIVERSE if (PRICE_DIR / f"{s}.csv").exists()]
     if not symbols:
         st.error("Không tìm thấy data/price/*.csv")
         return
