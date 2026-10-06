@@ -8,7 +8,8 @@ import streamlit as st
 
 from research_engine import CostAssumptions, add_sma_signals, backtest_long_only, load_price_csv
 
-ROOT = Path(__file__).resolve().parents[1]
+HERE = Path(__file__).resolve().parent
+ROOT = HERE if (HERE / "data" / "price").exists() else HERE.parent
 PRICE_DIR = ROOT / "data" / "price"
 
 COSTS = CostAssumptions(
