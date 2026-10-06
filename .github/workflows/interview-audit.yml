@@ -1,0 +1,69 @@
+name: Interview Audit Build
+
+on:
+  push:
+    branches:
+      - chatgpt-interview-audit-20261006
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install audit dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install pandas numpy pytest
+
+      - name: Run unit tests
+        run: |
+          cd interview_audit
+          pytest -q test_research_engine.py
+
+      - name: Run revised full-universe audit
+        run: |
+          python interview_audit/run_research_audit.py
+
+      - name: Validate outputs
+        run: |
+          python - <<'PY'
+          import pandas as pd
+          p = "interview_audit/results/backtest_summary_revised.csv"
+          df = pd.read_csv(p)
+          print(df.head().to_string(index=False))
+          assert len(df) == 30, f"Expected 30 symbols, got {len(df)}"
+          assert {"max_drawdown_pct","cagr_pct","sharpe_rf0","buy_hold_total_return_pct"}.issubset(df.columns)
+          PY
+
+      - name: Assemble clean package
+        run: |
+          PKG="artifact/SMA_Cross_VN30_TVS_Revised"
+          mkdir -p "$PKG/src" "$PKG/tests" "$PKG/data/price" "$PKG/results" "$PKG/legacy_reference"
+          cp interview_audit/research_engine.py "$PKG/src/research_engine.py"
+          cp interview_audit/run_research_audit.py "$PKG/run_research_audit.py"
+          cp interview_audit/app_dashboard_revised.py "$PKG/app_dashboard.py"
+          cp interview_audit/test_research_engine.py "$PKG/tests/test_research_engine.py"
+          cp interview_audit/requirements.txt "$PKG/requirements.txt"
+          cp interview_audit/README.md "$PKG/README.md"
+          cp -r data/price/*.csv "$PKG/data/price/"
+          cp -r interview_audit/results/* "$PKG/results/"
+          cp backtest_summary.csv "$PKG/legacy_reference/backtest_summary_legacy.csv"
+          printf "python -m pip install -r requirements.txt\npython run_research_audit.py\nstreamlit run app_dashboard.py\n" > "$PKG/RUN_COMMANDS.txt"
+
+      - name: Upload clean package
+        uses: actions/upload-artifact@v4
+        with:
+          name: SMA_Cross_VN30_TVS_Revised
+          path: artifact/SMA_Cross_VN30_TVS_Revised
+          if-no-files-found: error
+          retention-days: 7
