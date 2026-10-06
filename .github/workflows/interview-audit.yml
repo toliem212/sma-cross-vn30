@@ -23,7 +23,7 @@ jobs:
       - name: Install audit dependencies
         run: |
           python -m pip install --upgrade pip
-          pip install pandas numpy pytest
+          pip install -r interview_audit/requirements.txt
 
       - name: Run unit tests
         run: |
@@ -67,6 +67,7 @@ jobs:
           cd artifact/SMA_Cross_VN30_TVS_Revised
           python run_research_audit.py > package_smoke_test.log
           python -m pytest -q tests/test_research_engine.py
+          python -c "import app_dashboard; print('dashboard import OK')"
 
       - name: Upload clean package
         uses: actions/upload-artifact@v4
