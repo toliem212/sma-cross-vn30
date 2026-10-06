@@ -211,10 +211,10 @@ def main():
     c3.metric("Mức sụt giảm tối đa", dinh_dang_phan_tram_vi(metrics["max_drawdown_pct"], 2))
     c4.metric("Số giao dịch", dinh_dang_so_nguyen_vi(metrics["n_trades"]))
 
-    st.plotly_chart(tao_bieu_do(df, symbol), use_container_width=True)
+    st.plotly_chart(tao_bieu_do(df, symbol), width="stretch")
 
     st.subheader("Diễn biến giá trị tài sản")
-    st.plotly_chart(tao_bieu_do_nav(equity), use_container_width=True)
+    st.plotly_chart(tao_bieu_do_nav(equity), width="stretch")
 
     st.subheader("Danh sách giao dịch")
     bang = dinh_dang_bang_giao_dich(trades)
@@ -222,7 +222,7 @@ def main():
     if bang.empty:
         st.write("Giai đoạn dữ liệu không phát sinh chu kỳ mua - bán hoàn chỉnh theo quy tắc SMA10/50.")
     else:
-        st.dataframe(bang, use_container_width=True, hide_index=True)
+        st.dataframe(bang, width="stretch", hide_index=True)
 
     st.caption(
         "Kết quả được tính trên dữ liệu lịch sử của 30 mã cổ phiếu trong dự án, sử dụng thống nhất "
