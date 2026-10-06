@@ -13,9 +13,10 @@ from research_engine import (
     load_price_csv,
 )
 
-ROOT = Path(__file__).resolve().parents[1]
+HERE = Path(__file__).resolve().parent
+ROOT = HERE if (HERE / "data" / "price").exists() else HERE.parent
 PRICE_DIR = ROOT / "data" / "price"
-OUT_DIR = Path(__file__).resolve().parent / "results"
+OUT_DIR = HERE / "results"
 OUT_DIR.mkdir(parents=True, exist_ok=True)
 
 FIXED_UNIVERSE = [
