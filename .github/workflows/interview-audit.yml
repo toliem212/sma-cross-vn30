@@ -48,8 +48,8 @@ jobs:
       - name: Assemble clean package
         run: |
           PKG="artifact/SMA_Cross_VN30_TVS_Revised"
-          mkdir -p "$PKG/src" "$PKG/tests" "$PKG/data/price" "$PKG/results" "$PKG/legacy_reference"
-          cp interview_audit/research_engine.py "$PKG/src/research_engine.py"
+          mkdir -p "$PKG/tests" "$PKG/data/price" "$PKG/results" "$PKG/legacy_reference"
+          cp interview_audit/research_engine.py "$PKG/research_engine.py"
           cp interview_audit/run_research_audit.py "$PKG/run_research_audit.py"
           cp interview_audit/app_dashboard_revised.py "$PKG/app_dashboard.py"
           cp interview_audit/test_research_engine.py "$PKG/tests/test_research_engine.py"
@@ -59,6 +59,12 @@ jobs:
           cp -r interview_audit/results/* "$PKG/results/"
           cp backtest_summary.csv "$PKG/legacy_reference/backtest_summary_legacy.csv"
           printf "python -m pip install -r requirements.txt\npython run_research_audit.py\nstreamlit run app_dashboard.py\n" > "$PKG/RUN_COMMANDS.txt"
+
+      - name: Smoke-test packaged layout
+        run: |
+          cd artifact/SMA_Cross_VN30_TVS_Revised
+          python run_research_audit.py > package_smoke_test.log
+          python -m pytest -q tests/test_research_engine.py
 
       - name: Upload clean package
         uses: actions/upload-artifact@v4
