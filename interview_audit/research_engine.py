@@ -253,7 +253,10 @@ def buy_and_hold_metrics(
     buy_effective = buy_raw * (1 + costs.slippage_bps_each_side / 10_000) * (1 + costs.commission_bps_each_side / 10_000)
     shares = initial_capital / buy_effective
 
-    rows = []
+    # Chèn mốc vốn ban đầu ngay trước phiên đầu tiên để total return/CAGR
+    # và drawdown đều đo từ đúng initial_capital, kể cả chi phí vào lệnh.
+    first_time = pd.Timestamp(df.iloc[0]["time"])
+    rows = [{"time": first_time - pd.Timedelta(seconds=1), "nav": float(initial_capital)}]
     for _, row in df.iterrows():
         rows.append({"time": row["time"], "nav": shares * float(row["close"])})
 
