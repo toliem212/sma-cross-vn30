@@ -164,12 +164,63 @@ def dinh_dang_bang_giao_dich(trades: pd.DataFrame) -> pd.DataFrame:
 
 
 def main():
-    st.set_page_config(page_title="SMA Cross VN30", layout="wide")
+    st.set_page_config(
+        page_title="SMA Cross VN30",
+        page_icon="📈",
+        layout="wide",
+        initial_sidebar_state="expanded",
+    )
 
-    st.title("SMA Cross VN30 - Phân tích chiến lược")
-    st.caption(
-        "Chiến lược sử dụng SMA10 và SMA50 trên dữ liệu ngày. Tín hiệu được xác nhận theo giá đóng cửa "
-        "và giao dịch được mô phỏng tại giá mở cửa của phiên kế tiếp."
+    st.markdown(
+        """
+        <style>
+        .block-container {
+            max-width: 1380px;
+            padding-top: 1.6rem;
+            padding-bottom: 2.2rem;
+        }
+        [data-testid="stSidebar"] {
+            border-right: 1px solid rgba(49, 51, 63, 0.12);
+        }
+        [data-testid="stMetric"] {
+            background: rgba(245, 247, 250, 0.78);
+            border: 1px solid rgba(49, 51, 63, 0.10);
+            padding: 0.9rem 1rem;
+            border-radius: 0.8rem;
+        }
+        [data-testid="stMetricLabel"] {
+            font-weight: 600;
+        }
+        .project-kicker {
+            font-size: 0.88rem;
+            font-weight: 700;
+            letter-spacing: 0.04em;
+            color: #5f6b7a;
+            text-transform: uppercase;
+            margin-bottom: 0.25rem;
+        }
+        .project-subtitle {
+            color: #5f6b7a;
+            font-size: 1rem;
+            margin-top: -0.35rem;
+            margin-bottom: 1rem;
+        }
+        .method-box {
+            border: 1px solid rgba(49, 51, 63, 0.10);
+            border-radius: 0.8rem;
+            padding: 1rem 1.1rem;
+            background: rgba(245, 247, 250, 0.55);
+        }
+        </style>
+        """,
+        unsafe_allow_html=True,
+    )
+
+    st.markdown('<div class="project-kicker">Quantitative Research Project</div>', unsafe_allow_html=True)
+    st.title("SMA Cross VN30")
+    st.markdown(
+        '<div class="project-subtitle">Phân tích chiến lược giao cắt SMA10/SMA50 trên dữ liệu ngày của 30 mã cổ phiếu</div>',
+        unsafe_allow_html=True,
     )
 
     symbols = [s for s in DANH_SACH_MA if (PRICE_DIR / f"{s}.csv").exists()]
@@ -178,6 +229,7 @@ def main():
         return
 
     st.sidebar.header("Thiết lập mô phỏng")
+    st.sidebar.caption("Điều chỉnh mã cổ phiếu và vốn giả định để xem lại kết quả theo cùng một phương pháp.")
     symbol = st.sidebar.selectbox(
         "Mã cổ phiếu",
         symbols,
@@ -191,12 +243,19 @@ def main():
         st.sidebar.error("Vốn ban đầu cần từ 1.000.000 VNĐ trở lên.")
         return
 
-    with st.sidebar.expander("Thông số mô phỏng"):
-        st.write("SMA ngắn: 10 phiên")
-        st.write("SMA dài: 50 phiên")
-        st.write("Phí giao dịch: 0,15% mỗi chiều")
-        st.write("Trượt giá: 0,05% mỗi chiều")
-        st.write("Thuế khi bán: 0,10%")
+    with st.sidebar.expander("Thông số mô phỏng", expanded=False):
+        st.write("SMA ngắn: **10 phiên**")
+        st.write("SMA dài: **50 phiên**")
+        st.write("Phí giao dịch: **0,15% mỗi chiều**")
+        st.write("Trượt giá: **0,05% mỗi chiều**")
+        st.write("Thuế khi bán: **0,10%**")
+
+    st.sidebar.divider()
+    st.sidebar.link_button(
+        "Mã nguồn trên GitHub",
+        "https://github.com/toliem212/sma-cross-vn30",
+        width="stretch",
+    )
 
     df = load_price_csv(PRICE_DIR / f"{symbol}.csv")
     metrics, trades, equity = backtest_long_only(
@@ -205,28 +264,64 @@ def main():
         costs=CHI_PHI,
     )
 
+    st.caption(
+        f"Dữ liệu {symbol}: {df['time'].min():%d/%m/%Y} - {df['time'].max():%d/%m/%Y} · "
+        f"Vốn giả định: {dinh_dang_so_nguyen_vi(capital)} VNĐ"
+    )
+
     c1, c2, c3, c4 = st.columns(4)
     c1.metric("Tổng tỷ suất sinh lời", dinh_dang_phan_tram_vi(metrics["total_return_pct"], 2))
     c2.metric("Tăng trưởng bình quân năm", dinh_dang_phan_tram_vi(metrics["cagr_pct"], 2))
     c3.metric("Mức sụt giảm tối đa", dinh_dang_phan_tram_vi(metrics["max_drawdown_pct"], 2))
     c4.metric("Số giao dịch", dinh_dang_so_nguyen_vi(metrics["n_trades"]))
 
-    st.plotly_chart(tao_bieu_do(df, symbol), width="stretch")
+    tab_tong_quan, tab_giao_dich, tab_phuong_phap = st.tabs(
+        ["Tổng quan", "Giao dịch", "Phương pháp"]
+    )
 
-    st.subheader("Diễn biến giá trị tài sản")
-    st.plotly_chart(tao_bieu_do_nav(equity), width="stretch")
+    with tab_tong_quan:
+        st.subheader(f"Diễn biến giá và tín hiệu - {symbol}")
+        st.plotly_chart(tao_bieu_do(df, symbol), width="stretch")
 
-    st.subheader("Danh sách giao dịch")
-    bang = dinh_dang_bang_giao_dich(trades)
+        st.subheader("Diễn biến giá trị tài sản")
+        st.plotly_chart(tao_bieu_do_nav(equity), width="stretch")
 
-    if bang.empty:
-        st.write("Giai đoạn dữ liệu không phát sinh chu kỳ mua - bán hoàn chỉnh theo quy tắc SMA10/50.")
-    else:
-        st.dataframe(bang, width="stretch", hide_index=True)
+    with tab_giao_dich:
+        st.subheader(f"Danh sách giao dịch - {symbol}")
+        bang = dinh_dang_bang_giao_dich(trades)
 
+        if bang.empty:
+            st.info("Giai đoạn dữ liệu không phát sinh chu kỳ mua - bán hoàn chỉnh theo quy tắc SMA10/50.")
+        else:
+            st.dataframe(bang, width="stretch", hide_index=True)
+
+        if metrics["n_trades"] > 0:
+            a1, a2, a3 = st.columns(3)
+            a1.metric("Tỷ lệ giao dịch có lãi", dinh_dang_phan_tram_vi(metrics["win_rate_pct"], 2))
+            a2.metric("Giao dịch tốt nhất", dinh_dang_phan_tram_vi(metrics["best_trade_pct"], 2))
+            a3.metric("Giao dịch kém nhất", dinh_dang_phan_tram_vi(metrics["worst_trade_pct"], 2))
+
+    with tab_phuong_phap:
+        st.markdown(
+            """
+            <div class="method-box">
+            <b>Quy tắc tín hiệu</b><br>
+            Mua khi SMA10 cắt lên SMA50; bán khi SMA10 cắt xuống SMA50.<br><br>
+            <b>Thời điểm giao dịch</b><br>
+            Tín hiệu được xác nhận theo giá đóng cửa ngày t và giao dịch được mô phỏng tại giá mở cửa phiên t+1.<br><br>
+            <b>Chi phí mô phỏng</b><br>
+            Phí giao dịch 0,15% mỗi chiều; trượt giá 0,05% mỗi chiều; thuế khi bán 0,10%.<br><br>
+            <b>Phạm vi dữ liệu</b><br>
+            Cùng một quy tắc được áp dụng cho 30 mã cổ phiếu trong bộ dữ liệu của dự án.
+            </div>
+            """,
+            unsafe_allow_html=True,
+        )
+
+    st.divider()
     st.caption(
-        "Kết quả được tính trên dữ liệu lịch sử của 30 mã cổ phiếu trong dự án, sử dụng thống nhất "
-        "quy tắc SMA10/50, thời điểm giao dịch và bộ chi phí mô phỏng."
+        "Dự án nghiên cứu định lượng bằng Python · "
+        "Mã nguồn: github.com/toliem212/sma-cross-vn30"
     )
 
 
